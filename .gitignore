@@ -161,3 +161,5 @@ cython_debug/
 
 # Remove dzn files, as they should be generated.
 *.dzn
+
+/.idea

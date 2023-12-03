@@ -1,0 +1,1 @@
+Nothing here that really makes sense for minizinc. 
