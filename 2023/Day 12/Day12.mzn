@@ -50,6 +50,11 @@ constraint count(solution, 2, sum(groups));
 % There should be exactly the amount of working machiens as there is indicated in groups
 constraint count(solution, 1, (length_measurements - sum(groups)));
 constraint strictly_increasing(start_index);
+% These should be pretty strong in limiting the constraints. I got out of bed to add them.
+% Essentially, the start index is at least later or earlier than all groups after or before.
+constraint forall(i in 2..length_groups)(start_index[i] >= i + sum([x in groups | x in 1..i]));
+constraint forall(i in 1..(length_groups-1))(start_index[i] <= length_measurements - sum([x in groups | x in i..length_measurements]) - (length_groups - i));
+
 % Solve to satisfy the constraints. 
 solve satisfy;
 
