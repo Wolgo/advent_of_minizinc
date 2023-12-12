@@ -1,5 +1,4 @@
 from minizinc import Model, Solver, Instance
-import numpy as np
 import re
 
 # Switch between example and real instance.
@@ -7,109 +6,42 @@ import re
 file = open('input.txt', 'r')
 
 # Setup Minizinc
-model = Model("Day12a.mzn")
-# Solver with bigger max int
-gecode = Solver.lookup("float")
-instance = Instance(gecode, model)
+model = Model("Day12.mzn")
+gecode = Solver.lookup("gecode")
 
 lines = file.readlines()
-stage = 0
 
-array = np.empty((0, 3), int)
-print(array)
+count = 0
+i = 0
+all = len(lines)
+
 for line in lines:
-    if stage == 0:
-        seeds = list(map(int, re.findall('\d+', line)))
-        print(seeds)
-        instance["seed_length"] = len(seeds)
-        instance["seeds"] = seeds
-        stage = 1
-    elif 1 <= stage < 3:
-        stage += 1
-    elif 3 <= stage < 4:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["seed_to_soil_length"] = len(array)
-            instance["seed_to_soil"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
-    elif 4 <= stage < 6:
-        array = np.empty((0, 3), int)
-        stage += 1
-    elif 6 <= stage < 7:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["soil_to_fertilizer_length"] = len(array)
-            instance["soil_to_fertilizer"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
-    elif 7 <= stage < 9:
-        array = np.empty((0, 3), int)
-        stage += 1
-    elif 9 <= stage < 10:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["fertilizer_to_water_length"] = len(array)
-            instance["fertilizer_to_water"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
-    elif 10 <= stage < 12:
-        array = np.empty((0, 3), int)
-        stage += 1
-    elif 12 <= stage < 13:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["water_to_light_length"] = len(array)
-            instance["water_to_light"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
-    elif 13 <= stage < 15:
-        array = np.empty((0, 3), int)
-        stage += 1
-    elif 15 <= stage < 16:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["light_to_temperature_length"] = len(array)
-            instance["light_to_temperature"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
-    elif 16 <= stage < 18:
-        array = np.empty((0, 3), int)
-        stage += 1
-    elif 18 <= stage < 19:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["temperature_to_humidity_length"] = len(array)
-            instance["temperature_to_humidity"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
-    elif 19 <= stage < 21:
-        array = np.empty((0, 3), int)
-        stage += 1
-    elif 21 <= stage < 22:
-        numbers = list(map(int, re.findall('\d+', line)))
-        if len(numbers) == 0:
-            instance["humidity_to_location_length"] = len(array)
-            instance["humidity_to_location"] = array
-            print(array)
-            stage += 1
-        else:
-            array = np.vstack([array, numbers])
+    # Reset the instance, as we can't put a mismatching length and array.
+    instance = Instance(gecode, model)
+    # Extract relevant data and put it in the model as input
+    groups = list(map(int, re.findall('\d+', line)))
+    instance["length_groups"] = len(groups)
+    instance["groups"] = groups
+    measurements = re.findall('[.#?]', line)
+    instance["length_measurements"] = len(measurements)
 
-# Solve
-result = instance.solve()
-print(result)
-# Print Result from MiniZinc
-print(result["location"])
+    # Remap Character to Integers, so MiniZinc can handle them.
+    for idx, value in enumerate(measurements):
+        if value == '.':
+            measurements[idx] = 1
+        elif value == '#':
+            measurements[idx] = 2
+        elif value == '?':
+            measurements[idx] = 3
+    instance["measurements"] = list(map(int, measurements))
+
+    # find all Solutions instead of only 1
+    result = instance.solve(all_solutions=True)
+    # Keep track of the count
+    count += len(result.solution)
+    # Show Progress to ensure we do know when we should improve performance
+    i += 1
+    print("solved " + str(i) + " out of " + str(all))
+
+print(count)
+
