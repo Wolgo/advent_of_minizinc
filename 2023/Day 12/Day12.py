@@ -25,6 +25,9 @@ for line in lines:
     measurements = re.findall('[.#?]', line)
     instance["length_measurements"] = len(measurements)
 
+    # Addition for part b, set max_value in groups to limit search space.
+    instance["max_value"] = max(groups)
+
     # Remap Character to Integers, so MiniZinc can handle them.
     for idx, value in enumerate(measurements):
         if value == '.':
